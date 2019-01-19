@@ -12,25 +12,25 @@ import RealmSwift
 class CategoryViewController: UITableViewController {
     
     let realm = try! Realm()
-
+    
     var categories: Results<Category>?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        loadCategory()
+        loadCategories()
     }
     
     //MARK - TableView Datasource Methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categories?.count ?? 1
+        return categories?.count ?? 1 // If categories is nil, them simply return 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
         
-        cell.textLabel?.text = categories?[indexPath.row].name ?? "No categories add yet"
+        cell.textLabel?.text = categories?[indexPath.row].name ?? "No categories add yet" //If there's no categories yet, them display "No categories add yet".
         
         return cell
     }
@@ -39,10 +39,8 @@ class CategoryViewController: UITableViewController {
     //MARK - TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        performSegue(withIdentifier: "goToItems", sender: self)
 
-        //tableView.deselectRow(at: indexPath, animated: true)
+        performSegue(withIdentifier: "goToItems", sender: self)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -53,6 +51,24 @@ class CategoryViewController: UITableViewController {
             destinatioVC.selectCategory = categories?[indexPath.row]
         }
     }
+    
+    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        
+        if let selectCategory = categories?[indexPath.row]{
+        do {
+            try realm.write {
+                realm.delete(selectCategory)
+            }
+        } catch {
+            print("Error deleting category, \(error)")
+        }
+        }
+        tableView.reloadData()
+    }
 
     
     //MARK - Add New Categories
@@ -62,7 +78,7 @@ class CategoryViewController: UITableViewController {
         
         let alert = UIAlertController(title: "Add New Todey Category", message: "", preferredStyle: .alert)
         
-        let action = UIAlertAction(title: "Add", style: .default) { (action) in
+        let addAction = UIAlertAction(title: "Add", style: .default) { (action) in
             
             let newCategory = Category()
             
@@ -71,11 +87,17 @@ class CategoryViewController: UITableViewController {
             self.save(category: newCategory)
         }
         
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
+            NSLog("Cancel Pressed")
+            //alert.removeFromParent()
+        }
+        
         alert.addTextField { (alertTextField) in
             alertTextField.placeholder = "Add A New Category"
             textField = alertTextField
         }
-        alert.addAction(action)
+        alert.addAction(addAction)
+        alert.addAction(cancelAction)
         present(alert, animated: true, completion: nil)
     }
     
@@ -90,13 +112,12 @@ class CategoryViewController: UITableViewController {
         } catch {
             print("Error saving category, \(error)")
         }
-        
+
         tableView.reloadData()
     }
     
-    func loadCategory(){
+    func loadCategories(){
         categories = realm.objects(Category.self)
-
         tableView.reloadData()
     }
     
