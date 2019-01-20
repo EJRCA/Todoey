@@ -8,8 +8,9 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
     
     var todoItems: Results<Item>?
     let realm = try! Realm()
@@ -20,11 +21,44 @@ class TodoListViewController: UITableViewController {
         }
     }
     
+    @IBOutlet weak var searchBar: UISearchBar!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        tableView.separatorStyle = .none
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        
+        title = selectCategory?.name
+        
+        guard let colorHex = selectCategory?.color else {
+            fatalError()}
+        
+        updateNavBar(withHexCode: colorHex)
+    }
+    
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        
+        updateNavBar(withHexCode: "1D9BF6")
+    }
+    
+    
+    //MARK - Navibar setup codes methods
+    
+    func updateNavBar(withHexCode colorHexCode: String) {
+        
+        guard let navBar = navigationController?.navigationBar else {
+            fatalError("Navigation Controller does not exist.")}
+        
+        guard let navBarColor = UIColor(hexString: colorHexCode) else {
+            fatalError()}
+        navBar.barTintColor = navBarColor
+        navBar.tintColor = ContrastColorOf(navBarColor, returnFlat: true)
+        navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: navBar.tintColor]
+        searchBar.barTintColor = navBarColor
+    }
     
     //MARK - TableView Datasorce Methods
     
@@ -35,10 +69,17 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-        
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+   
         if let item = todoItems?[indexPath.row] {
             cell.textLabel?.text = item.title //
+            
+            let selectCategoryColor = UIColor(hexString: (selectCategory!.color))
+            
+            if let color = selectCategoryColor?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
+                cell.backgroundColor = color
+                cell.textLabel?.textColor = ContrastColorOf(color, returnFlat: true)
+            }
             
             // Ternary Operator ==>
             // value = condition ? valueIfTrue : valueIfFalse
@@ -58,7 +99,6 @@ class TodoListViewController: UITableViewController {
             
             do {
                 try realm.write {
-//                    realm.delete(item)
                     item.done = !item.done
                 }
                 } catch {
@@ -67,23 +107,6 @@ class TodoListViewController: UITableViewController {
         }
         tableView.reloadData()
         tableView.deselectRow(at: indexPath, animated: true) //Deselect the row after we click on it
-    }
-    
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        return true
-    }
-    
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        
-        do {
-            try realm.write {
-                let newItem = todoItems?[indexPath.row]
-                realm.delete(newItem!)
-            }
-        } catch {
-            print("Error deleting items, \(error)")
-        }
-        tableView.reloadData()
     }
     
     
@@ -134,6 +157,18 @@ class TodoListViewController: UITableViewController {
     func loadItems() {
         todoItems = selectCategory?.items.sorted(byKeyPath: "title", ascending: true)
         tableView.reloadData()
+    }
+    
+    override func updateModel(at indexPath: IndexPath) {
+        if let itemForDelection = todoItems?[indexPath.row]{
+            do {
+                try self.realm.write {
+                    self.realm.delete(itemForDelection)
+                }
+            } catch {
+                print("Error deleting category, \(error)")
+            }
+        }
     }
     
 }
