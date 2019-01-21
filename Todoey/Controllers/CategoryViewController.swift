@@ -66,27 +66,34 @@ class CategoryViewController: SwipeTableViewController {
         
         var textField = UITextField()
         
-        let alert = UIAlertController(title: "Add New Todey Category", message: "", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Add New Category", message: "", preferredStyle: .alert)
         
-        let addAction = UIAlertAction(title: "Add", style: .default) { (action) in
+        alert.addTextField { (alertTextField) in
+            alertTextField.placeholder = "Category Name"
+            textField = alertTextField
+        }
+        
+        let addAction = UIAlertAction(title: "ADD", style: .default) { (action) in
             
             let newCategory = Category()
             
             newCategory.name = textField.text!
             newCategory.color = UIColor.randomFlat.hexValue()
             
-            self.save(category: newCategory)
+            if newCategory.name.count != 0{
+                self.save(category: newCategory)
+            } else {
+                alert.title = ""
+                alert.message = "Please Enter a Ctegory Name Before You Add It"
+                self.present(alert, animated: true, completion: nil)
+            }
         }
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
             NSLog("Cancel Pressed")
-            //alert.removeFromParent()
+            alert.removeFromParent()
         }
         
-        alert.addTextField { (alertTextField) in
-            alertTextField.placeholder = "Add A New Category"
-            textField = alertTextField
-        }
         alert.addAction(addAction)
         alert.addAction(cancelAction)
         present(alert, animated: true, completion: nil)
@@ -99,12 +106,10 @@ class CategoryViewController: SwipeTableViewController {
         do{
             try realm.write {
                 realm.add(category)
-                
             }
         } catch {
             print("Error saving category, \(error)")
         }
-
         tableView.reloadData()
     }
     

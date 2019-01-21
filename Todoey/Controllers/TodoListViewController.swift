@@ -116,9 +116,19 @@ class TodoListViewController: SwipeTableViewController {
 
         var textField = UITextField()
 
-        let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
-
-        let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+        let alert = UIAlertController(title: "Add New Item", message: "", preferredStyle: .alert)
+        
+        alert.addTextField { (alertTextField) in
+            alertTextField.placeholder = "Item Name"
+            textField = alertTextField
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
+            NSLog("Cancel Pressed")
+            alert.removeFromParent()
+        }
+        
+        let addAction = UIAlertAction(title: "ADD", style: .default) { (action) in
             //  What will happen once the user clicks the Add Item button on our UIAlert
             
             if let currentCategory = self.selectCategory{
@@ -126,8 +136,15 @@ class TodoListViewController: SwipeTableViewController {
                     try self.realm.write {
                         let newItem = Item()
                         newItem.title = textField.text!
-                        newItem.dateCreated = Date()
-                        currentCategory.items.append(newItem)
+                        
+                        if newItem.title.count != 0{
+                            newItem.dateCreated = Date()
+                            currentCategory.items.append(newItem)
+                        } else {
+                            alert.title = ""
+                            alert.message = "Please Enter an Item Name Before You Add It"
+                            self.present(alert, animated: true, completion: nil)
+                        }
                     }
                 } catch {
                     print("Error saving new item, \(error)")
@@ -136,17 +153,8 @@ class TodoListViewController: SwipeTableViewController {
         
             self.tableView.reloadData()
         }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
-            NSLog("Cancel Pressed")
-            //alert.removeFromParent()
-        }
 
-        alert.addTextField { (alertTextField) in
-            alertTextField.placeholder = "Create new item"
-            textField = alertTextField
-        }
-
-        alert.addAction(action)
+        alert.addAction(addAction)
         alert.addAction(cancelAction)
         present(alert, animated: true, completion: nil)
     }
@@ -172,7 +180,6 @@ class TodoListViewController: SwipeTableViewController {
     }
     
 }
-
 
     //MARK - Search bar methods
 
