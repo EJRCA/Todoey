@@ -9,6 +9,7 @@
 import UIKit
 import RealmSwift
 import ChameleonFramework
+import DZPopupMessageView
 
 class CategoryViewController: SwipeTableViewController {
     
@@ -83,9 +84,9 @@ class CategoryViewController: SwipeTableViewController {
             if newCategory.name.count != 0{
                 self.save(category: newCategory)
             } else {
-                alert.title = ""
-                alert.message = "Please Enter a Ctegory Name Before You Add It"
-                self.present(alert, animated: true, completion: nil)
+                DZPopupMessageView.showPopupMessage("Please Enter a Category Name Before You Add It", DisappearAfter: 0.5, Callback: {
+                    self.present(alert, animated: true, completion: nil)
+                })
             }
         }
         

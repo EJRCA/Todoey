@@ -9,6 +9,7 @@
 import UIKit
 import RealmSwift
 import ChameleonFramework
+import DZPopupMessageView
 
 class TodoListViewController: SwipeTableViewController {
     
@@ -141,9 +142,9 @@ class TodoListViewController: SwipeTableViewController {
                             newItem.dateCreated = Date()
                             currentCategory.items.append(newItem)
                         } else {
-                            alert.title = ""
-                            alert.message = "Please Enter an Item Name Before You Add It"
-                            self.present(alert, animated: true, completion: nil)
+                            DZPopupMessageView.showPopupMessage("Please Enter a Item Name Before You Add It", DisappearAfter: 0.5, Callback: {
+                                self.present(alert, animated: true, completion: nil)
+                            })
                         }
                     }
                 } catch {
